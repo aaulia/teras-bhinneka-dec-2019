@@ -27,18 +27,206 @@
 <body>
   <div class="reveal">
     <div class="slides">
+
       <section>
-        <pre><code class="hljs kotlin" data-noescape data-trim data-line-numbers="4-6">
-          package com.bmd.common.v2
-          
-          sealed class Resource&ltT&gt {
-            class Loading&ltT&gt() : Resource&ltT&gt()
-            data class Success&ltT&gt(val value: T) : Resource&ltT&gt()
-            data class Failure&ltT&gt(val error: Throwable) : Resource&ltT&gt()
+        <h1>Managing Network Call State</h1>
+      </section>
+
+      <section>
+        <!-- image of phone with dummy application for displaying product -->
+      </section>
+
+      <section>
+        <pre><code class="hljs kotlin" data-noescape data-trim data-line-numbers="3-5">
+          interface ProductView {
+
+            fun showLoading()
+            fun showProduct(product: Product)
+            fun showError(error: Throwable)
+
           }
         </code></pre>
       </section>
-      <section>Slide 2</section>
+
+      <section>
+        <pre><code class="hljs kotlin"  data-noescape data-trim data-line-numbers="7,12-13">
+          class ProductPresenter(
+            private val view: ProductView, 
+            private val repository: ProductRepository
+          ) {
+
+            fun getProduct(sku: String) {
+              view.showLoading()
+              repository.getProduct(sku)
+                .subscribeOn(io())
+                .observeOn(mainThread())
+                .subscribe(
+                  { product -> view.showProduct(product) },
+                  { error -> view.showError(error) }
+                )
+            }
+
+          }
+        </code></pre>
+      </section>
+
+      <section>
+        <!-- image of phone with dummy application for displaying product and reviews -->
+      </section>
+
+      <section>
+        <pre><code class="hljs kotlin" data-noescape data-trim data-line-numbers="3-5,7-9">
+            interface ProductView {
+  
+              fun showProductLoading()
+              fun showProductContent(product: Product)
+              fun showProductError(error: Throwable)
+  
+              fun showReviewsLoading()
+              fun showReviewsContent(reviews: List&ltReview&gt)
+              fun showReviewsError(error: Throwable)
+  
+            }
+          </code></pre>
+      </section>
+
+      <section>
+        <pre><code class="hljs kotlin"  data-noescape data-trim data-line-numbers="7,12-13,18,23-24">
+            class ProductPresenter(
+              private val view: ProductView, 
+              private val repository: ProductRepository
+            ) {
+  
+              fun getProduct(sku: String) {
+                view.showProductLoading()
+                repository.getProduct(sku)
+                  .subscribeOn(io())
+                  .observeOn(mainThread())
+                  .subscribe(
+                    { product -> view.showProductContent(product) },
+                    { error -> view.showProductError(error) }
+                  )
+              }
+
+              fun getReviews(sku: String) {
+                view.showReviewsLoading()
+                repository.getReviews(sku)
+                  .subscribeOn(io())
+                  .observeOn(mainThread())
+                  .subscribe(
+                    { reviews -> view.showReviewsContent(reviews) },
+                    { error -> view.showReviewsError(error) }
+                  )
+              }
+
+            }
+          </code></pre>
+      </section>
+
+      <section>
+        <h1>Let's Make It Simpler</h1>
+      </section>
+
+      <section>
+        <h1>How?</h1>
+        <ul>
+          <li class="fragment">
+            <h3>Use a more reactive approach (MVVM?)</h3>
+          </li>
+          <li class="fragment">
+            <h3>Sealed Class</h3>
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <!-- Show fragmented image transition about network call state flow -->
+      </section>
+
+      <section>
+        <pre><code class="hljs kotlin"  data-noescape data-trim data-line-numbers="3-5">
+          sealed class Resource&ltT&gt {
+            
+            class Loading&ltT&gt() : Resource&ltT&gt()
+            data class Success&ltT&gt(value: T) : Resource&ltT&gt()
+            data class Failure&ltT&gt(error: Throwable) : Resource&ltT&gt()
+
+          }
+        </code></pre>
+      </section>
+
+      <section>
+        <pre><code class="hljs kotlin"  data-noescape data-trim data-line-numbers="9,12,17-19,25-27">
+          class ProductViewModel(
+            private val repository: ProductRepository
+          ) : ViewModel() {
+
+            private val productProcessor = BehaviorProcessor.create&ltResource&ltProduct&gt&gt
+
+            private val reviewsProcessor = BehaviorProcessor.create&ltResource&ltList&ltReview&gt&gt&gt
+
+            val product: Flowable&ltProduct&gt
+              get() = productProcessor
+
+            val reviews: Flowable&ltList&ltReview&gt&gt
+              get() = reviewsProcessor
+
+            fun getProduct(sku: String) {
+              repository.getProduct(sku)
+                .map&ltResource&ltProduct&gt&gt { product -> Success(product) }
+                .startWith(Loading())
+                .onErrorReturn { error -> Failure(error) }
+                .subscribe { resource -> productProcessor.onNext(resource) }
+            }
+
+            fun getReviews(sku: String) {
+              repository.getReviews(sku)
+                .map&ltResource&ltList&ltReview&gt&gt&gt { reviews -> Success(reviews) }
+                .startWith(Loading())
+                .onErrorReturn { error -> Failure(error) }
+                .subscribe { resource -> reviewsProcessor.onNext(resource) }
+            }
+
+          }
+        </code></pre>
+      </section>
+
+      <section>
+        <pre><code class="hljs kotlin"  data-noescape data-trim data-line-numbers="1-3,6,9,15-17,20,23">
+          product.subscribe { resource ->
+            when (resource) {
+              is Loading -> { 
+                //
+              }
+              is Success -> {
+                val content = resource.value
+              }
+              is Failure -> {
+                val error = resource.error
+              }
+            }
+          }
+
+          reviews.subscribe { resource ->
+            when (resource) {
+              is Loading -> {
+                //
+              }
+              is Success -> {
+                val content = resource.value
+              }
+              is Failure -> {
+                val error = resource.error
+              }
+            }
+          }
+        </code></pre>
+      </section>
+
+      <section>
+        <h1>Terima Kasih</h1>
+      </section>
+
     </div>
   </div>
 
@@ -56,11 +244,14 @@
         { src: 'plugin/highlight/highlight.js', async: true }
       ],
 
-      width: "100%",
-      height: "100%",
+      width: "70%",
+      height: "95%",
 
       controls: false,
+
       progress: false,
+
+      history: true,
     });
   </script>
 </body>

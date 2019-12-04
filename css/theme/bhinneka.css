@@ -13,7 +13,7 @@ section.has-light-background, section.has-light-background h1, section.has-light
 body {
   background-image: url('../../img/bhinneka_logo.svg'), url('../../img/asli_bikin_tenang.svg');
   background-size: 15%, auto;
-  background-position: top 5% left 5%, bottom 5% right 5%;
+  background-position: top 2.5% left 2.5%, bottom 2.5% right 2.5%;
   background-repeat: no-repeat;
   /* background: #092c52; */
   background-color: #092c52; }
@@ -54,7 +54,7 @@ body {
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: normal;
-  text-transform: uppercase;
+  text-transform: capitalize;
   text-shadow: none;
   word-wrap: break-word; }
 
@@ -164,7 +164,7 @@ body {
   padding: 24px;
   border-radius: 16px;
   overflow: auto;
-  max-height: 512px;
+  max-height: 80%;
   word-wrap: normal; }
 
 .reveal table {
